@@ -1,0 +1,192 @@
+---
+version: '3.5'
+services:
+
+  zookeeper1:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper1
+    container_name: zookeeper1
+    restart: always
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_PEER_PORT: 12888
+      ZOOKEEPER_LEADER_PORT: 13888
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=*
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: 'zookeeper1:12888:13888;zookeeper2:22888:23888;zookeeper3:32888:33888;zookeeper4:42888:43888;zookeeper5:52888:53888;zookeeper6:62888:63888'
+      ZOOKEEPER_GROUPS: 1:2:3;4:5:6
+      ZOOKEEPER_WEIGHTS: 1;1;1;1;1;1
+      ZOOKEEPER_CFG_EXTRA: 'reconfigEnabled=true'
+    volumes:
+      - ./zoo1/data:/var/lib/zookeeper/data
+      - ./zoo1/log:/var/lib/zookeeper/log
+    networks:
+      kafka_net:
+
+  zookeeper2:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper2
+    container_name: zookeeper2
+    restart: always
+    ports:
+      - 2182:2182
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_PEER_PORT: 22888
+      ZOOKEEPER_LEADER_PORT: 23888
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=*
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_SERVERS: 'zookeeper1:12888:13888;zookeeper2:22888:23888;zookeeper3:32888:33888;zookeeper4:42888:43888;zookeeper5:52888:53888;zookeeper6:62888:63888'
+      ZOOKEEPER_GROUPS: 1:2:3;4:5:6
+      ZOOKEEPER_WEIGHTS: 1;1;1;1;1;1
+      ZOOKEEPER_CFG_EXTRA: 'reconfigEnabled=true'
+    volumes:
+      - ./zoo2/data:/var/lib/zookeeper/data
+      - ./zoo2/log:/var/lib/zookeeper/log
+    networks:
+      kafka_net:
+
+  zookeeper3:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper3
+    container_name: zookeeper3
+    restart: always
+    ports:
+      - 2183:2183
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2183
+      ZOOKEEPER_PEER_PORT: 32888
+      ZOOKEEPER_LEADER_PORT: 33888
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=*
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_SERVERS: 'zookeeper1:12888:13888;zookeeper2:22888:23888;zookeeper3:32888:33888;zookeeper4:42888:43888;zookeeper5:52888:53888;zookeeper6:62888:63888'
+      ZOOKEEPER_GROUPS: 1:2:3;4:5:6
+      ZOOKEEPER_WEIGHTS: 1;1;1;1;1;1
+      ZOOKEEPER_CFG_EXTRA: 'reconfigEnabled=true'
+    volumes:
+      - ./zoo3/data:/var/lib/zookeeper/data
+      - ./zoo3/log:/var/lib/zookeeper/log
+    networks:
+      kafka_net:
+
+  broker1:
+    image: confluentinc/cp-server:latest
+    hostname: broker1
+    container_name: broker1
+    restart: always
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    ports:
+      - "19092:19092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_BROKER_RACK: 'hall1'
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1, "replicas": [{"count": 2, "constraints": {"rack": "hall1"}}, {"count": 2, "constraints": {"rack": "hall2"}}], "observers": [{"count": 1, "constraints": {"rack": "hall1"}}, {"count": 1, "constraints": {"rack": "hall2"}}]}'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper1:2181,zookeeper2:2182,zookeeper3:2183'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:19092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+    volumes:
+      - ./broker1/data:/var/lib/kafka/data
+    networks:
+      kafka_net:
+
+  broker2:
+    image: confluentinc/cp-server:latest
+    hostname: broker2
+    container_name: broker2
+    restart: always
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_BROKER_RACK: 'hall1'
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1, "replicas": [{"count": 2, "constraints": {"rack": "hall1"}}, {"count": 2, "constraints": {"rack": "hall2"}}], "observers": [{"count": 1, "constraints": {"rack": "hall1"}}, {"count": 1, "constraints": {"rack": "hall2"}}]}'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper1:2181,zookeeper2:2182,zookeeper3:2183'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker2:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+    volumes:
+      - ./broker2/data:/var/lib/kafka/data
+    networks:
+      kafka_net:
+
+  broker3:
+    image: confluentinc/cp-server:latest
+    hostname: broker3
+    container_name: broker3
+    restart: always
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    ports:
+      - "39092:39092"
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_BROKER_RACK: 'hall1'
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1, "replicas": [{"count": 2, "constraints": {"rack": "hall1"}}, {"count": 2, "constraints": {"rack": "hall2"}}], "observers": [{"count": 1, "constraints": {"rack": "hall1"}}, {"count": 1, "constraints": {"rack": "hall2"}}]}'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper1:2181,zookeeper2:2182,zookeeper3:2183'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker3:39092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+    volumes:
+      - ./broker3/data:/var/lib/kafka/data
+    networks:
+      kafka_net:
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:latest
+    hostname: control-center
+    container_name: control-center
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_KAFKA_MRC_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+      CONTROL_CENTER_KAFKA_METRICS_BOOTSTRAP_SERVERS: broker1:19092,broker2:29092,broker3:39092,broker4:49092,broker5:59092,broker6:9092
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+    networks:
+      kafka_net:
+
+networks:
+  kafka_net:
+    driver: bridge
+    name: kafka_net
