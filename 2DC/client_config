@@ -1,0 +1,8 @@
+# producer client
+kafka-producer-perf-test --topic mrc-failover-test --throughput 1 --num-records 1000000 --record-size 1 --producer-props batch.size=100000 linger.ms=100 compression.type=lz4 acks=1 bootstrap.servers=localhost:19092,localhost:29092,localhost:39092,localhost:49092,localhost:59092,localhost:9092
+
+# consumer client
+kafka-console-consumer --bootstrap-server localhost:19092,localhost:29092,localhost:39092,localhost:49092,localhost:59092,localhost:9092 --topic mrc-failover-test --from-beginning
+
+# admin client
+kafka-topics --describe --topic mrc-failover-test --bootstrap-server localhost:19092,localhost:29092,localhost:39092,localhost:49092,localhost:59092,localhost:9092
